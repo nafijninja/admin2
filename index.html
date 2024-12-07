@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Admin Panel</title>
+</head>
+<body>
+    <h1>Firebase Admin Panel</h1>
+
+    <!-- Authentication Section (Login Form) -->
+    <div id="authSection" style="display: none;">
+        <h2>Admin Login</h2>
+        <label for="email">Email:</label>
+        <input type="email" id="email" placeholder="Enter your email" required>
+        <br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Enter your password" required>
+        <br><br>
+        <button id="loginButton">Log In</button>
+    </div>
+    
+    <!-- User Info Section (Logged in Email & Logout Button) -->
+    <div id="userSection" style="display: none;">
+        <p id="statusMessage"></p>
+        <button id="logoutButton" style="display: none;">Log Out</button>
+    </div>
+
+    <!-- Input Fields for Firebase Database Operations -->
+    <label for="enterKey">Enter Key:</label>
+    <input type="text" id="enterKey" placeholder="Enter Key">
+    <br><br>
+    <label for="enterValue">Enter Value:</label>
+    <input type="text" id="enterValue" placeholder="Enter Value">
+    <br><br>
+    <label for="uploadImage">Upload Image:</label>
+    <input type="file" id="uploadImage" accept="image/*">
+    <br><br>
+    <button id="updateButton">Update Data</button>
+    <button id="deleteButton">Delete Data</button>
+    <button id="deleteImageButton">Delete Image</button>
+    
+    <p>end of codes</p>
+    <br><br>
+    <p id="statusMessage" style="font-weight: bold;"></p>
+
+    <!-- Firebase SDK Compatibility Mode -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-storage-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8u8_i2rD6HEvU8Pi4CaZC916ny63ec3I",
+            authDomain: "website-demo-24.firebaseapp.com",
+            databaseURL: "https://website-demo-24-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "website-demo-24",
+            storageBucket: "website-demo-24.firebasestorage.app",
+            messagingSenderId: "346117554665",
+            appId: "1:346117554665:web:0c1536c7176517c8a4cb78",
+            measurementId: "G-1GSKL8WVQJ"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        const storage = firebase.storage();
+
+        // Cloudinary API URL and Preset
+        const cloudinaryUrl = "https://api.cloudinary.com/v1_1/dkujoguge/image/upload";
+        const uploadPreset = "NAFIJ-PRO"; // Your Cloudinary preset
+
+        // Check if the user is logged in
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById("authSection").style.display = "none";
+                document.getElementById("userSection").style.display = "block";
+                document.getElementById("logoutButton").style.display = "inline-block";
+                document.getElementById("statusMessage").textContent = `Logged in as ${user.email}`;
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        // Firebase Authentication - Log in user
+        document.getElementById("loginButton").addEventListener("click", function() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            if (email && password) {
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        document.getElementById("authSection").style.display = "none";
+                        document.getElementById("userSection").style.display = "block";
+                        document.getElementById("logoutButton").style.display = "inline-block";
+                        document.getElementById("statusMessage").textContent = `Logged in as ${user.email}`;
+                    })
+                    .catch((error) => {
+                        document.getElementById("statusMessage").textContent = `Error: ${error.message}`;
+                        document.getElementById("statusMessage").style.color = "red";
+                    });
+            } else {
+                document.getElementById("statusMessage").textContent = "Please enter both email and password.";
+            }
+        });
+
+        // Firebase Authentication - Log out user
+        document.getElementById("logoutButton").addEventListener("click", function() {
+            auth.signOut()
+                .then(() => {
+                    document.getElementById("userSection").style.display = "none";
+                    document.getElementById("authSection").style.display = "block";
+                    window.location.href = "login.html"; // Redirect to login page after logout
+                })
+                .catch((error) => {
+                    document.getElementById("statusMessage").textContent = `Error: ${error.message}`;
+                });
+        });
+
+        // Update Data with Image Functionality
+        document.getElementById("updateButton").addEventListener("click", async function() {
+            const key = document.getElementById("enterKey").value;
+            const value = document.getElementById("enterValue").value;
+            const imageFile = document.getElementById("uploadImage").files[0];
+
+            if (key && value) {
+                try {
+                    let imageUrl = null;
+
+                    if (imageFile) {
+                        imageUrl = await uploadImageToCloudinary(imageFile); // Get the URL after image is uploaded to Cloudinary
+                    }
+
+                    const reference = database.ref("data/" + key);
+                    await reference.set({
+                        value: value,
+                        imageUrl: imageUrl || "No image uploaded"
+                    });
+
+                    document.getElementById("statusMessage").textContent = "✅ Data updated successfully!";
+                    document.getElementById("statusMessage").style.color = "green";
+                } catch (error) {
+                    document.getElementById("statusMessage").textContent = "❌ " + error.message;
+                    document.getElementById("statusMessage").style.color = "red";
+                }
+            } else {
+                document.getElementById("statusMessage").textContent = "⚠️ Please enter both key and value.";
+                document.getElementById("statusMessage").style.color = "orange";
+            }
+        });
+
+        // Delete Data Functionality
+        document.getElementById("deleteButton").addEventListener("click", function() {
+            const key = document.getElementById("enterKey").value;
+
+            if (key) {
+                const reference = database.ref("data/" + key);
+                reference.remove()
+                    .then(() => {
+                        document.getElementById("statusMessage").textContent = "✅ Data deleted successfully!";
+                        document.getElementById("statusMessage").style.color = "green";
+                    })
+                    .catch((error) => {
+                        document.getElementById("statusMessage").textContent = "❌ Error deleting data: " + error.message;
+                        document.getElementById("statusMessage").style.color = "red";
+                    });
+            } else {
+                document.getElementById("statusMessage").textContent = "⚠️ Please enter a key to delete.";
+                document.getElementById("statusMessage").style.color = "orange";
+            }
+        });
+
+        // Delete Image Functionality
+        document.getElementById("deleteImageButton").addEventListener("click", async function() {
+            const key = document.getElementById("enterKey").value;
+
+            if (key) {
+                const reference = database.ref("data/" + key);
+                try {
+                    const snapshot = await reference.once('value');
+                    const data = snapshot.val();
+                    const imageUrl = data ? data.imageUrl : null;
+
+                    if (imageUrl && imageUrl !== "No image uploaded") {
+                        const publicId = imageUrl.split('/').pop().split('.')[0];
+                        const cloudinaryDeleteUrl = `https://api.cloudinary.com/v1_1/dkujoguge/image/destroy`;
+
+                        const formData = new FormData();
+                        formData.append("public_id", publicId);
+                        formData.append("api_key", "your-cloudinary-api-key");
+                        formData.append("api_secret", "your-cloudinary-api-secret");
+
+                        await fetch(cloudinaryDeleteUrl, {
+                            method: "POST",
+                            body: formData
+                        });
+
+                        await reference.update({
+                            imageUrl: "No image uploaded"
+                        });
+
+                        document.getElementById("statusMessage").textContent = "✅ Image deleted successfully!";
+                        document.getElementById("statusMessage").style.color = "green";
+                    }
+                } catch (error) {
+                    document.getElementById("statusMessage").textContent = "❌ Error deleting image: " + error.message;
+                    document.getElementById("statusMessage").style.color = "red";
+                }
+            } else {
+                document.getElementById("statusMessage").textContent = "⚠️ Please enter a key to delete the image.";
+                document.getElementById("statusMessage").style.color = "orange";
+            }
+        });
+
+        // Function to upload image to Cloudinary
+        async function uploadImageToCloudinary(imageFile) {
+            const formData = new FormData();
+            formData.append("file", imageFile);
+            formData.append("upload_preset", uploadPreset);
+
+            try {
+                const response = await fetch(cloudinaryUrl, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+                return data.secure_url; // Return the URL of the uploaded image
+            } catch (error) {
+                throw new Error("Error uploading image to Cloudinary: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

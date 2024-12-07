@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #8e44ad, #3498db);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+        }
+        .container {
+            background: #fff;
+            border-radius: 15px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            color: #333;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #8e44ad;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border: 1px solid #8e44ad;
+            box-shadow: 0 0 10px rgba(142, 68, 173, 0.3);
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #8e44ad;
+            color: #fff;
+            font-size: 16px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #732d91;
+        }
+        .password-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .password-container input {
+            width: 85%;
+        }
+        .show-password {
+            cursor: pointer;
+        }
+        p {
+            margin-top: 15px;
+        }
+        a {
+            color: #8e44ad;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .status-message {
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .status-message.success {
+            color: green;
+        }
+        .status-message.error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Login</h1>
+        <input type="email" id="email" placeholder="Enter Your Email" required>
+        <div class="password-container">
+            <input type="password" id="password" placeholder="Enter Your Password" required>
+            <span class="show-password" id="showPassword">👁️</span>
+        </div>
+        <button id="loginButton">Log In</button>
+        <p>
+            Don't have an account? <a href="signup.html">Sign Up</a><br>
+            <a href="forgot-password.html">Forgot Password?</a>
+        </p>
+        <p class="status-message" id="statusMessage"></p>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8u8_i2rD6HEvU8Pi4CaZC916ny63ec3I",
+            authDomain: "website-demo-24.firebaseapp.com",
+            projectId: "website-demo-24",
+            storageBucket: "website-demo-24.appspot.com",
+            messagingSenderId: "346117554665",
+            appId: "1:346117554665:web:0c1536c7176517c8a4cb78"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Redirect if user is already logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // Show success message
+                const statusMessage = document.getElementById("statusMessage");
+                statusMessage.textContent = "✔️ Already logged in!";
+                statusMessage.className = "status-message success";
+
+                // Delay redirection to give time for status message to show
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 2000); // 2 seconds delay
+            }
+        });
+
+        // Show/Hide password functionality
+        document.getElementById("showPassword").addEventListener("click", function() {
+            const passwordField = document.getElementById("password");
+            const passwordType = passwordField.type === "password" ? "text" : "password";
+            passwordField.type = passwordType;
+        });
+
+        // Login functionality
+        document.getElementById("loginButton").addEventListener("click", async function () {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const statusMessage = document.getElementById("statusMessage");
+
+            if (email && password) {
+                try {
+                    await auth.signInWithEmailAndPassword(email, password);
+                    statusMessage.textContent = "✔️ Login successful!";
+                    statusMessage.className = "status-message success";
+                    window.location.href = "index.html";
+                } catch (error) {
+                    if (error.code === "auth/wrong-password") {
+                        statusMessage.textContent = "❌ Wrong password!";
+                    } else if (error.code === "auth/user-not-found") {
+                        statusMessage.textContent = "❌ User not found!";
+                    } else {
+                        statusMessage.textContent = "❌ " + error.message;
+                    }
+                    statusMessage.className = "status-message error";
+                }
+            } else {
+                statusMessage.textContent = "⚠️ Please enter both email and password.";
+                statusMessage.className = "status-message error";
+            }
+        });
+    </script>
+</body>
+</html>

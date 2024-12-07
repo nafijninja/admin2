@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #8e44ad, #3498db);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+        }
+        .container {
+            background: #fff;
+            border-radius: 15px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            color: #333;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #8e44ad;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border: 1px solid #8e44ad;
+            box-shadow: 0 0 10px rgba(142, 68, 173, 0.3);
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #8e44ad;
+            color: #fff;
+            font-size: 16px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #732d91;
+        }
+        p {
+            margin-top: 15px;
+        }
+        a {
+            color: #8e44ad;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sign Up</h1>
+        <input type="email" id="email" placeholder="Enter Your Email" required>
+        <input type="password" id="password" placeholder="Create Password" required>
+        <button id="signUpButton">Sign Up</button>
+        <p>
+            Already have an account? <a href="login.html">Log In</a>
+        </p>
+        <p id="statusMessage"></p>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        document.getElementById("signUpButton").addEventListener("click", async function () {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const statusMessage = document.getElementById("statusMessage");
+
+            if (email && password) {
+                try {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    statusMessage.textContent = "✔️ Sign-up successful! Redirecting to login...";
+                    statusMessage.style.color = "green";
+                    setTimeout(() => {
+                        window.location.href = "login.html";
+                    }, 2000);
+                } catch (error) {
+                    statusMessage.textContent = "❌ " + error.message;
+                    statusMessage.style.color = "red";
+                }
+            } else {
+                statusMessage.textContent = "⚠️ Please fill all fields.";
+                statusMessage.style.color = "orange";
+            }
+        });
+    </script>
+</body>
+</html>
